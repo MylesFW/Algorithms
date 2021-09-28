@@ -210,26 +210,148 @@ sumZero([-4, -3, -2, -1, 0, 1, 2, 3, 10]);
 
 ### Example
 
-> Implement a function called countUniqueValues, which accepts a sorted array and counts the unique values in the array. There can be negative numbers in the array, but it will always be sorted.
+> Implement a function called countUniqueValues, which accepts a sorted array and counts the unique values in the array. There can be negative numbers in the array, but it will always be sorted. Both pointers start on the same side and move together.
+
+This solution solves the problem without changing the array
 
 ```js
 function countUniqueValues(arr) {
-	let total = 0;
-	let LP = 0;
-	let RP = LP + 1;
+	if (arr.length === 0) {
+		return console.log('total # of unique numbers = ', 0);
+	}
 
-	while (RP <= arr.length) {
-		if (RP > LP) {
+	let total = 1;
+	let LP = 0;
+	let RP = 1;
+
+	while (LP <= arr.length) {
+		if (arr[LP] < arr[RP]) {
+			total += 1;
 			RP++;
 			LP++;
-			console.log(RP);
-			console.log(LP);
+		} else {
+			RP++;
+			LP++;
+		}
+	}
+	return console.log('total # of unique numbers = ', total);
+}
+
+countUniqueValues([1, 1, 1, 1, 1, 2, 2]);
+countUniqueValues([1, 2, 2, 3, 4, 5, 5, 5, 6, 7]);
+countUniqueValues([]);
+countUniqueValues([-3, -3, -2, -1, 0, 1]);
+```
+
+An alternate solution is possible only if the array can be altered.
+
+```js
+function countUniqueValues(arr) {
+	if (arr.length === 0) {
+		return 0;
+	}
+	var i = 0;
+	for (var j = 1; j < arr.length; j++) {
+		if (arr[i] !== arr[j]) {
+			i++;
+			arr[i] = arr[j];
 		}
 	}
 }
 
-countUniqueValues([1, 1, 1, 1, 1, 2, 2]);
-countUniqueValues([1, 2, 3, 4, 5, 5, 5, 6, 7]);
-countUniqueValues([]);
-countUniqueValues([-3, -3, -2, -1, 0, 1]);
+countUniqueValues([1, 1, 1, 1, 2, 3]);
+
+//countUniqueValues([1, 1, 1, 1, 2, 3]);
+//                  i^ j^
+//countUniqueValues([1, 1, 1, 1, 2, 3]);
+//                  i^    j^
+//countUniqueValues([1, 1, 1, 1, 2, 3]);
+//                  i^    j^
+//countUniqueValues([1, 1, 1, 1, 2, 3]);
+//                  i^       j^
+//countUniqueValues([1, 2, 1, 1, 2, 3]);
+//                     i^       j^
+//countUniqueValues([1, 2, 3, 1, 2, 3]);
+//                        i^       j^
 ```
+
+# Sliding Window
+
+This pattern involves creating a window which can either be an array or number from one position to another. Very useful for keeping track of a subset of data in an array/string etc.
+
+### Example
+
+> Write a function called maxSubarraySum which accepts an array of integers and a number called n. The function should calculate the maximum sum of n consecutive element in the array.
+
+Poor Solution
+
+O(N^2).
+
+```js
+function maxSubarrySum(arr, num) {
+	if (num > arr.length) {
+		return null;
+	}
+	//sum of 5 consecutive numbers but the arr.length is only 3, return null
+	var max = -Infinity;
+	//-Infinity means that if an array of all neg numbers is presented, it still works
+	for (let i = 0; i < arr.length - num + 1; i++) {
+		//loop stops at 2, since that is the last possible group of 3
+		temp = 0;
+		for (let j = 0; j < num; j++) {
+			temp += arr[i + j];
+		}
+		//sums the 3 numbers together and set that as the temp
+		if (temp > max) {
+			max = temp;
+		}
+		// if temp is larger than max, replace max with temp amount
+	}
+	return max;
+}
+
+maxSubarraySum([2, 6, 5, 4, 8, 3, 2, 5, 4], 3);
+//              ^     ^               => 2 + 6 + 5 = 13
+//                 ^     ^            => 6 + 5 + 4 = 15
+//                    ^     ^         => 5 + 4 + 8 = 17
+
+//each new set of 3 must re-add all numbers back together
+```
+
+Sliding Window Refactoring
+
+Better Solution
+
+O(N). While this may not save time for this small amount, it exponentially saves time.
+
+```js
+function maxSubarraySum(arr, num) {
+	let maxSum = 0;
+	let tempSum = 0;
+	if (arr.length < num) {
+		return null;
+	}
+	for (let i = 0; i < num; i++) {
+		maxSum = +arr[i];
+	}
+	tempSum = maxSum;
+	for (let i = num; i < arr.length; i++) {
+		tempSum = tempSum - arr[i - num] + arr[i];
+		maxSum = Math.max(maxSum, tempSum);
+	}
+	return maxSum;
+}
+
+maxSubarraySum([2, 6, 5, 4, 8, 3, 2, 5, 4], 3);
+//              ^     ^                 => 2 + 6 + 5 = 13
+//               -2^     ^+4            => 13 - 2 + 4 = 15
+//                  -6^     ^+8         => 15 - 6 + 8 = 17
+//here the 'window' moves
+//storing the tempSum amount, subtracting the number leaving the scope, and adding the number entering the scope
+```
+
+# Divide & Conquer
+
+This pattern incolces dividing a data set into smaller chinks and then repeating a process with a subset of data. This pattern can tremendously decrease time complexity. \*must be sorted
+
+This is where data (like an array) will halve it over and over until it reaches its goal.
